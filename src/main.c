@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
     printf("  INSERT INTO table VALUES ('id','name')\n");
     printf("  SELECT * FROM table WHERE id=*\n");
     printf("  SELECT * FROM table \n");
+    printf("  UPDATE table SET name='newname' WHERE id=*");
     printf("  DELETE 'id' WHERE id=*\n");
     printf("  .exit\n");
 
