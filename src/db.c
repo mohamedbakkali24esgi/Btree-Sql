@@ -4,22 +4,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void save_node(FILE* f, BTreeNode* n) {
+    if (!n) return;
+    save_node(f, n->left);
+    fwrite(&n->value, sizeof(Row), 1, f);
+    save_node(f, n->right);
+}
+
 Table* table_open(const char* filename) {
     Table* t = (Table*)calloc(1, sizeof(Table));
     if (!t) return NULL;
+
     t->index = btree_create();
-    t->filename = filename;
+    t->filename = filename ? strdup(filename) : strdup("class_db.data");
 
-    // TODO: load from disk (persistence)
-    // For now, start empty.
-
+    // Try to open existing file
+    FILE* f = fopen(t->filename, "rb");
+    if (f) {
+        Row r;
+        while (fread(&r, sizeof(Row), 1, f) == 1) {
+            btree_insert(t->index, r.id, &r);
+        }
+        fclose(f);
+    }
     return t;
 }
 
 void table_close(Table* t) {
     if (!t) return;
-    // TODO: save to disk (persistence)
+
+    // Save all rows to file
+    FILE* f = fopen(t->filename, "wb");
+    if (f) {
+        save_node(f, t->index->root);
+        fclose(f);
+    }
+
     btree_destroy(t->index);
+    free((void*)t->filename);
     free(t);
 }
 
@@ -37,3 +59,4 @@ bool table_delete(Table* t, int32_t id) {
     if (!t) return false;
     return btree_delete(t->index, id);
 }
+
