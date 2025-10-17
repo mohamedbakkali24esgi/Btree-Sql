@@ -1,16 +1,14 @@
 # class_db
 
-A simple, **in-memory database implementation in C**, using a basic **Binary Search Tree (BST)** as an index (stubbed as a B-Tree API for future upgrades).
-This project serves as a minimal educational example of a database with basic CRUD operations (Create, Read, Update, Delete) via a text-based SQL-like command interface.
+A simple, **in-memory database implementation in C**, using a basic **Binary Search Tree (BST)** as an index (stubbed as a B-Tree API for future upgrades). This project serves as a minimal educational example of a database with full CRUD operations (Create, Read, Update, Delete) and now includes **ASC/DESC sorting** in SELECT queries.
 
-> **Note:** Persistence to disk is not yet implemented. The database starts empty each run, and all data is lost on exit.
+> **New:** You can now use `ORDER BY DESC` to list rows in reverse order.
 
 ---
 
 ## 🤩 Features
 
-* **Data Structure:** Uses a BST for indexing rows by ID (primary key).
-  Each row is a simple struct:
+* **Data Structure:** Uses a BST for indexing rows by ID (primary key). Each row is a simple struct:
 
   ```c
   struct Row {
@@ -21,18 +19,20 @@ This project serves as a minimal educational example of a database with basic CR
 
 * **Commands Supported:**
 
-  | Command                                   | Description                                       |
-  | ----------------------------------------- | ------------------------------------------------- |
-  | `INSERT INTO table VALUES ('id','name');` | Insert a new row (rejects duplicates on ID).      |
-  | `SELECT * FROM table WHERE id=*;`         | Select and print a row by ID.                     |
-  | `SELECT * FROM table WHERE name='name';`  | Select and print rows by name (case-insensitive). |
-  | `SELECT * FROM table;`                    | Print all rows.                                   |
-  | `DELETE FROM table WHERE id=*;`           | Delete a row by ID.                               |
-  | `.exit`                                   | Quit the program.                                 |
+  | Command                                       | Description                                       |
+  | --------------------------------------------- | ------------------------------------------------- |
+  | `INSERT INTO table VALUES ('id','name');`     | Insert a new row (rejects duplicates on ID).      |
+  | `SELECT * FROM table WHERE id=*;`             | Select and print a row by ID.                     |
+  | `SELECT * FROM table WHERE name='name';`      | Select and print rows by name (case-insensitive). |
+  | `SELECT * FROM table;`                        | Print all rows in ascending order.                |
+  | `SELECT * FROM table ORDER BY DESC;`          | Print all rows sorted by descending ID.           |
+  | `UPDATE table SET name='newname' WHERE id=*;` | Update an existing row's name.                    |
+  | `DELETE FROM table WHERE id=*;`               | Delete a row by ID.                               |
+  | `.exit`                                       | Quit the program.                                 |
 
-* **Error Handling:** Basic checks for duplicates, not-found rows, and parse errors.
+* **Error Handling:** Basic checks for duplicates, not-found rows, and syntax errors.
 
-* **Testing:** Includes a basic unit test (`tests/test_basic.c`) for insert/select/delete.
+* **Testing:** Includes a basic unit test (`tests/test_basic.c`) for insert/select/delete/update.
 
 * **Build System:** Makefile with sanitizer options (`AddressSanitizer`, `UBSan`) and test targets.
 
@@ -47,9 +47,9 @@ This project serves as a minimal educational example of a database with basic CR
 │   └── db.h           # Database Table and Row definitions
 ├── src/
 │   ├── btree.c        # B-Tree (BST) implementation
-│   ├── db.c           # Table operations (open, close, insert, select, delete)
+│   ├── db.c           # Table operations (open, close, insert, select, delete, update)
 │   ├── main.c         # Main entry point and REPL loop
-│   └── parser.c       # Command parser for INSERT/SELECT/DELETE
+│   └── parser.c       # Command parser (INSERT, SELECT, UPDATE, DELETE, ORDER BY DESC)
 ├── tests/
 │   └── test_basic.c   # Basic unit tests
 ├── Makefile           # Build rules
@@ -60,8 +60,7 @@ This project serves as a minimal educational example of a database with basic CR
 
 ## ⚙️ Building
 
-Requires **GCC** (or any compatible C compiler).
-No external dependencies.
+Requires **GCC** (or any compatible C compiler). No external dependencies.
 
 ### Build the main binary:
 
@@ -104,6 +103,8 @@ class_db ready. Type commands like:
   INSERT INTO table VALUES ('id','name')
   SELECT * FROM table WHERE id=*
   SELECT * FROM table
+  SELECT * FROM table ORDER BY DESC
+  UPDATE table SET name='newname' WHERE id=*
   DELETE FROM table WHERE id=*
   .exit
 >
@@ -118,25 +119,31 @@ class_db ready. Type commands like:
 OK
 > INSERT INTO table VALUES (2,'bob');
 OK
-> SELECT * FROM table WHERE id=1;
-1,'alice'
-> SELECT * FROM table WHERE name='bob';
-2,'bob'
 > SELECT * FROM table;
 1,'alice'
 2,'bob'
-> DELETE FROM table WHERE id=1;
+> SELECT * FROM table ORDER BY DESC;
+2,'bob'
+1,'alice'
+> UPDATE table SET name='charlie' WHERE id=1;
+UPDATED
+> SELECT * FROM table WHERE id=1;
+1,'charlie'
+> DELETE FROM table WHERE id=2;
 DELETED
 > SELECT * FROM table;
-2,'bob'
+1,'charlie'
 > .exit
 ```
 
+---
+
 ### Notes
 
-* Values can be **quoted** (`'value'`) or **unquoted** (`plain words/numbers`).
+* Values can be **quoted** (`'value'`) or **unquoted** (`plain`).
 * Duplicate IDs are rejected (`ERROR: duplicate primary key`).
-* `SELECT` by name performs a **full scan** (O(n)).
+* `SELECT * FROM table` shows ascending order by default.
+* `SELECT * FROM table ORDER BY DESC` reverses the order.
 * Commands are **case-insensitive** (`select`, `SELECT`, and `Select` all work).
 
 ---
@@ -152,9 +159,9 @@ make test
 This compiles and executes `tests/test_basic`, which verifies:
 
 * Insert
-* Select
+* Select (ASC/DESC)
+* Update
 * Delete
-  operations using C `assert()` statements.
 
 ---
 
