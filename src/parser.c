@@ -169,6 +169,57 @@ bool handle_command(Table* t, const char* line_in) {
             printf("NOT FOUND\n");
         return true;
     }
+        // =========== UPDATE =====================
+    if (strncasecmp(s, "UPDATE", 6) == 0) {
+        s += 6; s = skip_ws(s);
+        // skip table name
+        while (*s && !isspace((unsigned char)*s)) ++s;
+        s = skip_ws(s);
+
+        if (strncasecmp(s, "SET", 3) != 0) return false;
+        s += 3; s = skip_ws(s);
+
+        if (strncasecmp(s, "name", 4) != 0) return false;
+        s += 4; s = skip_ws(s);
+
+        if (*s != '=') return false;
+        s++; s = skip_ws(s);
+
+        char newname[64];
+        parse_value(&s, newname, sizeof newname);
+        s = skip_ws(s);
+
+        if (strncasecmp(s, "WHERE", 5) != 0) return false;
+        s += 5; s = skip_ws(s);
+
+        if (strncasecmp(s, "id", 2) != 0) return false;
+        s += 2; s = skip_ws(s);
+
+        if (*s != '=') return false;
+        s++; s = skip_ws(s);
+
+        char id_str[32];
+        parse_value(&s, id_str, sizeof id_str);
+
+        int32_t id = (int32_t)atoi(id_str);
+        Row r;
+        if (!table_select_by_id(t, id, &r)) {
+            printf("NOT FOUND\n");
+            return true;
+        }
+
+        // Update name and replace in the tree
+        strncpy(r.name, newname, sizeof r.name - 1);
+        r.name[sizeof r.name - 1] = '\0';
+        if (!table_update(t, &r)) {
+            printf("UPDATE FAILED\n");
+            return false;
+        }
+
+        printf("UPDATED\n");
+        return true;
+    }
+
 
     return false;
 }

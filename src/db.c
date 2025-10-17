@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// ========================
+// Internal helper
+// ========================
 static void save_node(FILE* f, BTreeNode* n) {
     if (!n) return;
     save_node(f, n->left);
@@ -11,6 +14,9 @@ static void save_node(FILE* f, BTreeNode* n) {
     save_node(f, n->right);
 }
 
+// ========================
+// Table open / close
+// ========================
 Table* table_open(const char* filename) {
     Table* t = (Table*)calloc(1, sizeof(Table));
     if (!t) return NULL;
@@ -18,7 +24,7 @@ Table* table_open(const char* filename) {
     t->index = btree_create();
     t->filename = filename ? strdup(filename) : strdup("class_db.data");
 
-    // Try to open existing file
+    // Load existing data if file exists
     FILE* f = fopen(t->filename, "rb");
     if (f) {
         Row r;
@@ -27,6 +33,7 @@ Table* table_open(const char* filename) {
         }
         fclose(f);
     }
+
     return t;
 }
 
@@ -45,6 +52,9 @@ void table_close(Table* t) {
     free(t);
 }
 
+// ========================
+// CRUD operations
+// ========================
 bool table_insert(Table* t, const Row* r) {
     if (!t || !r) return false;
     return btree_insert(t->index, r->id, r);
@@ -60,3 +70,10 @@ bool table_delete(Table* t, int32_t id) {
     return btree_delete(t->index, id);
 }
 
+// ========================
+// UPDATE operation
+// ========================
+bool table_update(Table* t, const Row* r) {
+    if (!t || !r) return false;
+    return btree_update(t->index, r);
+}

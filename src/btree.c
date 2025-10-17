@@ -98,3 +98,18 @@ bool btree_delete(BTree* t, int32_t key) {
     t->root = delete_rec(t->root, key, &removed);
     return removed;
 }
+
+bool btree_update(BTree* tree, const Row* row) {
+    if (!tree || !row) return false;
+    BTreeNode* node = tree->root;
+    while (node) {
+        if (row->id < node->value.id) node = node->left;
+        else if (row->id > node->value.id) node = node->right;
+        else {
+            strncpy(node->value.name, row->name, sizeof(node->value.name) - 1);
+            node->value.name[sizeof(node->value.name) - 1] = '\0';
+            return true;
+        }
+    }
+    return false;
+}
